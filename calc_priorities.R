@@ -1,6 +1,6 @@
 xx <- read.csv2("~/Downloads/priorities_latestx_priorities.csv",stringsAsFactors = FALSE,quote="")
 
-
+library(jsonlite)
 conv <- function(x) {
   cv <- fromJSON(gsub("\"$","",gsub("^\"","",x)))
   res <- 0
@@ -20,3 +20,5 @@ prio <-read.csv2("~/Downloads/priorities_latestx_priorities.csv",stringsAsFactor
 prio1 <- prio %>% inner_join(prio_vz)
 
 prio2 <- prio1 %>% mutate(FINAL_PRIORITY = VZPR + RS_PRIO_COUNT)
+
+write.csv2(prio2,"output/priorities.csv" ,row.names=FALSE)
