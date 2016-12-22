@@ -1,2 +1,2 @@
-# kiss-data
-Kindergarten Information Software System
+# darzeliai
+Vilniaus darželių duomenų analizė
