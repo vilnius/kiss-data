@@ -24,11 +24,12 @@ names(work)[7] <- "LANG"
 work[,"AGETO"] <- as.numeric(work[,"AGETO"])
 work[,"LANG"] <- substr(work[,"LANG"],1,3)
 
+work[is.na(work[,"stays"]),"stays"] <- F
+
 drz <- unique(work[,c("SCH","LANG","NEEDS")])
 final <- cbind(drz,"slots.from.1.to.3","slots.from.3.to.inf","all.from.1.to.3","all.from.3.to.inf")
 final <- final[-(1:nrow(final)),]
 
-work[is.na(work[,"stays"]),"stays"] <- F
 
 for(i in 1:nrow(drz)){
   tmp <- work[work[,"SCH"]==drz[i,1]& work[,"LANG"]==drz[i,2]& work[,"NEEDS"]==drz[i,3],]
@@ -36,17 +37,27 @@ for(i in 1:nrow(drz)){
   tmp <- tmp[,-c(4)]
   fin <- count(tmp$AGETO)
   names(fin) <- c("AGETO","SPACE")
-  fin2 <- ddply(tmp,~AGETO,function(xframe){
-    sum(xframe$stay==F)})
-  names(fin2) <- c("AGETO","LEAVE")
-  fin <- merge(fin,fin2)
+  fin[1,"TAKEN"] <- sum(tmp[,"age_jan"]<fin[1,1],na.rm=T)
+  for(j in 2:nrow(fin)){
+    fin[j,"TAKEN"] <- sum(tmp[,"age_jan"]<fin[j,1] & tmp[,"age_jan"]>fin[j-1,1],na.rm=T)
+    }
+  fin[,"LEAVE"] <- fin[,"SPACE"] -  fin[,"TAKEN"] 
+  # fin2 <- ddply(tmp,~AGETO,function(xframe){
+  #   sum(xframe$stay==F)})
+  # names(fin2) <- c("AGETO","LEAVE")
+  # fin <- merge(fin,fin2)
 
-  slots.from.1.to.3 <- fin[fin[,"AGETO"]==3,"LEAVE"]
-  if(length(slots.from.1.to.3)==0) slots.from.1.to.3 <-0
-  all.from.1.to.3 <- sum(fin[fin[,"AGETO"]<=3,"SPACE"])
-  slots.from.3.to.inf <- fin[fin[,"AGETO"]==max(fin[,"AGETO"]),"LEAVE"] - slots.from.1.to.3
+  slots.from.1.to.3 <- sum(fin[fin[,"AGETO"]<=3,"LEAVE"],na.rm=T)
+  
+  all.from.1.to.3 <- sum(fin[fin[,"AGETO"]<=3,"SPACE"],na.rm=T)
+  slots.from.3.to.inf <- sum(fin[fin[,"AGETO"]>3,"LEAVE"],na.rm=T)
+  all.from.3.to.inf <- sum(fin[fin[,"AGETO"]>3,"SPACE"],na.rm=T)
+  if(slots.from.1.to.3<0 ){
+    slots.from.1.to.3 <- slots.from.3.to.inf + slots.from.1.to.3
+    slots.from.3.to.inf <- 0
+    } 
   if(slots.from.3.to.inf<0) slots.from.3.to.inf <-0
-  all.from.3.to.inf <- sum(fin[fin[,"AGETO"]>3,"SPACE"])
+
 
   final <- rbind(final,cbind(drz[i,],all.from.1.to.3,all.from.3.to.inf,slots.from.1.to.3,slots.from.3.to.inf))
 
